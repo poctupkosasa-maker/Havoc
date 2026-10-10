@@ -26,6 +26,8 @@ jobs:
           java-version: '25'
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+      - name: Check shader identifiers
+        run: python3 -m unittest discover -s tests -v
       - name: Build and check
         run: ./gradlew build --no-daemon --stacktrace
       - name: Upload built jars
