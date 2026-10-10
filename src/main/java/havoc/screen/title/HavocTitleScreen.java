@@ -6,6 +6,8 @@ import havoc.render.RenderUtil;
 import havoc.render.font.GFonts;
 import havoc.screen.menu.UiAnimationEngine;
 import havoc.screen.style.ConsoleStyle;
+import havoc.screen.library.LibraryLayout;
+import havoc.screen.library.LibraryArtwork;
 import net.minecraft.client.gui.components.Button;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,7 +90,7 @@ public final class HavocTitleScreen extends TitleScreen {
       for (int i = 0; i < LABELS.length; i++) {
          final int index = i;
          Button tile = new ConsoleControl(Math.round(this.tileX(i)), Math.round(this.tileY()),
-            Math.round(this.tileSize()), Math.round(this.tileSize()), LABELS[i], () -> {
+            Math.round(this.cardSize(i)), Math.round(this.cardSize(i)), LABELS[i], () -> {
                if (this.selectedTile == index) {
                   this.activateSelected();
                } else {
@@ -99,7 +101,7 @@ public final class HavocTitleScreen extends TitleScreen {
          this.controls.add(this.addRenderableWidget(tile));
       }
       this.actionControl = new ConsoleControl(Math.round(this.margin()), Math.round(this.actionY()),
-         132, 25, ACTIONS[this.selectedTile], this::activateSelected, -1);
+         this.consoleLayout().actionWidth(), 25, ACTIONS[this.selectedTile], this::activateSelected, -1);
       this.controls.add(this.addRenderableWidget(this.actionControl));
       this.controls.add(this.addRenderableWidget(new ConsoleControl(this.width - 56, 12, 20, 20, "Язык",
          () -> this.openScreen(new LanguageSelectScreen(this, this.minecraft.options, this.minecraft.getLanguageManager())), -1)));
@@ -109,15 +111,26 @@ public final class HavocTitleScreen extends TitleScreen {
       this.updateControlState();
    }
 
-   private float margin() { return Math.max(18.0F, this.width * 0.065F); }
-   private float tileSize() { return Math.max(30.0F, Math.min(76.0F, Math.min(this.height * 0.19F, (this.width - 2 * this.margin() - 36) / 5))); }
-   private float tileX(int index) { return this.margin() + index * (this.tileSize() + 9.0F); }
-   private float tileY() { return Math.max(43.0F, this.height * 0.16F); }
-   private float heroY() { return this.tileY() + this.tileSize() + 30.0F; }
-   private float actionY() { return Math.min(this.height - 48.0F, this.heroY() + 72.0F); }
+   private LibraryLayout consoleLayout() { return new LibraryLayout(this.width, this.height); }
+   private float margin() { return this.consoleLayout().heroX(); }
+   private float cardSize(int index) { return index == this.selectedTile ? this.consoleLayout().largeTile() : this.consoleLayout().smallTile(); }
+   private float tileX(int index) {
+      float x = this.consoleLayout().margin();
+      for (int i = 0; i < index; i++) x += this.cardSize(i) + this.consoleLayout().gap();
+      return x;
+   }
+   private float tileY() { return this.consoleLayout().rowY(); }
+   private float heroY() { return this.consoleLayout().heroY(); }
+   private float actionY() { return this.consoleLayout().actionY(); }
 
    private void selectTile(int index) {
       this.selectedTile = Math.floorMod(index, LABELS.length);
+      for (int i = 0; i < this.tiles.size(); i++) {
+         Button tile = this.tiles.get(i);
+         tile.setPosition(Math.round(this.tileX(i)), Math.round(this.tileY()));
+         tile.setWidth(Math.round(this.cardSize(i)));
+         tile.setHeight(Math.round(this.cardSize(i)));
+      }
       if (this.actionControl != null) {
          this.actionControl.setMessage(Component.literal(ACTIONS[this.selectedTile]));
       }
@@ -162,9 +175,10 @@ public final class HavocTitleScreen extends TitleScreen {
          control.extractRenderState(context, mouseX, mouseY, delta);
       }
       float left = this.margin();
-      RenderUtil.drawText(context, "Игры", left, 18.0F, ConsoleStyle.TEXT, GFonts.SEMIBOLD, 10.0F);
-      RenderUtil.drawRoundRect(context, left, 32, 25, 1.5F, 0.7F, 0xFFEAF3FF);
-      RenderUtil.drawText(context, "HAVOC", left + 44, 19, ConsoleStyle.MUTED, GFonts.MEDIUM, 8);
+      float headerX = this.consoleLayout().margin();
+      RenderUtil.drawText(context, "Игры", headerX, 18.0F, ConsoleStyle.TEXT, GFonts.SEMIBOLD, 10.0F);
+      RenderUtil.drawRoundRect(context, headerX, 32, 25, 1.5F, 0.7F, 0xFFEAF3FF);
+      RenderUtil.drawText(context, "Коллекция", headerX + 44, 19, ConsoleStyle.MUTED, GFonts.MEDIUM, 8);
       long second = System.currentTimeMillis() / 1000L;
       if (second != this.clockSecond) {
          this.clockSecond = second;
@@ -175,14 +189,14 @@ public final class HavocTitleScreen extends TitleScreen {
          this.drawTile(context, i, reveal);
       }
       float hero = this.heroY();
-      RenderUtil.drawText(context, "MINECRAFT  /  26.2", left, hero, ConsoleStyle.MUTED, GFonts.MEDIUM, 6.5F);
-      RenderUtil.drawTextFadeRight(context, TITLES[this.selectedTile], left, hero + 13,
+      RenderUtil.drawText(context, "HAVOC  /  MINECRAFT 26.2", left, hero - 15, ConsoleStyle.MUTED, GFonts.MEDIUM, 6.5F);
+      RenderUtil.drawTextFadeRight(context, TITLES[this.selectedTile], left, hero,
          ColorUtil.multiplyAlpha(ConsoleStyle.TEXT, reveal), GFonts.BOLD, Math.min(27.0F, this.width / 18.0F), this.width - left * 2, 12);
-      if (this.actionY() - hero > 62) {
-         RenderUtil.drawTextFadeRight(context, DESCRIPTIONS[this.selectedTile], left, hero + 48,
+      if (this.actionY() - hero > 48) {
+         RenderUtil.drawTextFadeRight(context, DESCRIPTIONS[this.selectedTile], left, hero + 34,
             ConsoleStyle.MUTED, GFonts.MEDIUM, 7.5F, this.width - left * 2, 12);
       }
-      this.drawButton(context, ACTIONS[this.selectedTile], left, this.actionY(), 132, 25, true,
+      this.drawButton(context, ACTIONS[this.selectedTile], left, this.actionY(), this.consoleLayout().actionWidth(), 25, true,
          mouseX, mouseY, "title:action", 0, this.actionControl.isFocused());
       this.drawCornerIcons(context, mouseX, mouseY);
       this.drawFooter(context, reveal);
@@ -197,7 +211,7 @@ public final class HavocTitleScreen extends TitleScreen {
       float scale = Math.max(this.width / 1376.0F, this.height / 768.0F);
       float w = 1376 * scale;
       float h = 768 * scale;
-      RenderUtil.drawImage(context, "textures/gui/console_background.png", (this.width - w) / 2,
+      RenderUtil.drawImage(context, this.selectedTile == 1 ? LibraryArtwork.SERVERS : LibraryArtwork.WORLDS, (this.width - w) / 2,
          (this.height - h) / 2, w, h, 0, 0xFFFFFFFF, 1);
       for (int i = 0; i < TINTS.length; i++) {
          float tint = this.animation.animate01("title:backdrop:" + i, this.selectedTile == i ? 1 : 0, 7, 0);
@@ -218,16 +232,27 @@ public final class HavocTitleScreen extends TitleScreen {
       float x = tile.getX();
       float y = tile.getY();
       float size = tile.getWidth();
-      float inset = (1 - focus) * 4;
-      RenderUtil.drawRoundRectGradient(context, x + inset, y + inset, size - inset * 2, size - inset * 2, 7,
-         ColorUtil.multiplyAlpha(TINTS[index], alpha), ColorUtil.multiplyAlpha(0xFF101928, alpha));
-      RenderUtil.drawBorder(context, x - 2, y - 2, size + 4, size + 4, 9,
+      Identifier cover = switch (index) {
+         case 0 -> LibraryArtwork.WORLDS;
+         case 1 -> LibraryArtwork.SERVERS;
+         default -> Identifier.fromNamespaceAndPath("havoc", "textures/gui/menu_background.png");
+      };
+      RenderUtil.drawImage(context, cover, x, y, size, size, 6, ColorUtil.multiplyAlpha(-1, alpha), 1);
+      RenderUtil.drawRoundRectGradientQuad(context, x, y, size, size, 6,
+         0x10080B13, 0xDB080B13, 0xDB080B13, 0x10080B13);
+      RenderUtil.drawBorder(context, x - 2, y - 2, size + 4, size + 4, 8,
          ColorUtil.multiplyAlpha(0xFFE8F3FF, alpha * (focus * 0.9F + hover * 0.1F)), 1, 0, 0.5F);
-      float icon = size * 0.36F;
-      RenderUtil.drawImage(context, "textures/gui/icons/" + ICONS[index] + ".png", x + (size - icon) / 2,
-         y + (size - icon) / 2 - 2, icon, icon, 0, ColorUtil.multiplyAlpha(ConsoleStyle.TEXT, alpha), 1);
-      if (focus > 0.02F) {
-         RenderUtil.drawText(context, LABELS[index], x, y + size + 8, ColorUtil.multiplyAlpha(ConsoleStyle.TEXT, focus * alpha), GFonts.MEDIUM, 6.5F);
+      RenderUtil.drawTextFadeRight(context, LABELS[index], x + 4, y + size - 13,
+         ConsoleStyle.TEXT, GFonts.SEMIBOLD, this.selectedTile == index ? 6.5F : 5, size - 8, 3);
+      if (index >= 2) {
+         float icon = size * 0.32F;
+         RenderUtil.drawImage(context, "textures/gui/icons/" + ICONS[index] + ".png", x + (size - icon) / 2,
+            y + (size - icon) / 2 - 3, icon, icon, 0, ConsoleStyle.TEXT, 1);
+      }
+      if (this.selectedTile == index) {
+         RenderUtil.drawTextFadeRight(context, LABELS[index], x + size + 8,
+            y + this.consoleLayout().smallTile() + 8, ColorUtil.multiplyAlpha(ConsoleStyle.TEXT, alpha),
+            GFonts.MEDIUM, 9, this.width - x - size - 24, 8);
       }
    }
 
@@ -235,8 +260,8 @@ public final class HavocTitleScreen extends TitleScreen {
                            boolean primary, int mouseX, int mouseY, String key, float stagger, boolean stickyActive) {
       boolean hover = this.inRect(mouseX, mouseY, x, y, w, h);
       float focus = this.animation.animate01(key + ":hover", hover || stickyActive ? 1 : 0, 16, 0);
-      ConsoleStyle.button(context, x, y, w, h, true, focus, 1, primary);
-      this.drawCenteredText(context, label, x + w / 2, y + (h - 7) / 2, primary ? 0xFF142035 : ConsoleStyle.TEXT, 7, true);
+      ConsoleStyle.button(context, x, y, w, h, true, focus, 1, false);
+      this.drawCenteredText(context, label, x + w / 2, y + (h - 7) / 2, ConsoleStyle.TEXT, 7, true);
    }
 
    private final class ConsoleControl extends Button {
