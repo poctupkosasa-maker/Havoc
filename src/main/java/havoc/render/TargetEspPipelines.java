@@ -45,37 +45,6 @@ public final class TargetEspPipelines {
       texture -> RenderType.create("havoc_target_marker", RenderSetup.builder(MARKER).withTexture("Sampler0", texture).sortOnUpload().createRenderSetup())
    );
    public static final RenderType RING_LAYER = RenderType.create("havoc_target_ring", RenderSetup.builder(RING).sortOnUpload().createRenderSetup());
-   private static final RenderPipeline ESP_FIELD = RenderPipeline.builder(new Snippet[0])
-      .withBindGroupLayout(BindGroupLayouts.GLOBALS)
-      .withBindGroupLayout(BindGroupLayouts.MATRICES_PROJECTION)
-      .withLocation("pipeline/havoc_target_esp_field")
-      .withVertexShader(Identifier.fromNamespaceAndPath("havoc", "core/target_esp_field"))
-      .withFragmentShader(Identifier.fromNamespaceAndPath("havoc", "core/target_esp_field"))
-      .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
-      .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
-      .withCull(false)
-      .withVertexBinding(0, DefaultVertexFormat.POSITION_TEX_COLOR)
-      .withPrimitiveTopology(PrimitiveTopology.QUADS)
-      .build();
-   private static final RenderPipeline ESP_PARTICLE = RenderPipeline.builder(new Snippet[0])
-      .withBindGroupLayout(BindGroupLayouts.GLOBALS)
-      .withBindGroupLayout(BindGroupLayouts.MATRICES_PROJECTION)
-      .withLocation("pipeline/havoc_target_esp_particle")
-      .withVertexShader(Identifier.fromNamespaceAndPath("havoc", "core/target_esp_particle"))
-      .withFragmentShader(Identifier.fromNamespaceAndPath("havoc", "core/target_esp_particle"))
-      .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
-      .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
-      .withCull(false)
-      .withVertexBinding(0, DefaultVertexFormat.POSITION_TEX_COLOR)
-      .withPrimitiveTopology(PrimitiveTopology.QUADS)
-      .build();
-   public static final RenderType ESP_FIELD_LAYER = RenderType.create(
-      "havoc_target_esp_field", RenderSetup.builder(ESP_FIELD).sortOnUpload().createRenderSetup()
-   );
-   public static final RenderType ESP_PARTICLE_LAYER = RenderType.create(
-      "havoc_target_esp_particle", RenderSetup.builder(ESP_PARTICLE).sortOnUpload().createRenderSetup()
-   );
-
    private TargetEspPipelines() {
    }
 }

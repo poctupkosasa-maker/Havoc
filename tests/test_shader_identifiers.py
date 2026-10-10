@@ -16,16 +16,21 @@ class ShaderIdentifierTests(unittest.TestCase):
             with self.subTest(path=str(path.relative_to(ROOT))):
                 self.assertEqual(pattern.findall(path.read_text()), [])
 
-    def test_target_esp_shaders_use_explicit_identifiers_and_exist(self):
-        source = (JAVA / "havoc/render/TargetEspPipelines.java").read_text()
-        for shader in ("target_esp_field", "target_esp_particle"):
-            for stage, extension in (("Vertex", "vsh"), ("Fragment", "fsh")):
-                with self.subTest(shader=shader, stage=stage):
-                    self.assertIn(
-                        f'.with{stage}Shader(Identifier.fromNamespaceAndPath("havoc", "core/{shader}"))',
-                        source,
-                    )
-                    self.assertTrue((RESOURCES / f"havoc/shaders/core/{shader}.{extension}").is_file())
+    def test_target_esp_only_keeps_requested_modes(self):
+        source = (JAVA / "havoc/module/impl/visuals/TargetESP.java").read_text()
+        modes = dict(re.findall(r'private static final String (MODE_\w+) = "([^"]+)";', source))
+        self.assertEqual(modes, {
+            "MODE_MARKER": "Маркер", "MODE_RING": "Кольцо",
+            "MODE_GHOSTS": "Призраки", "MODE_BRACKET": "Скан-брекет",
+        })
+        self.assertIn("List.of(MODE_MARKER, MODE_RING, MODE_GHOSTS, MODE_BRACKET)", source)
+        for method in ("renderMarker", "renderRing", "renderGhosts", "renderBracketOverlay"):
+            self.assertIn(f"private void {method}(", source)
+        pipelines = (JAVA / "havoc/render/TargetEspPipelines.java").read_text()
+        self.assertNotIn("ESP_FIELD", pipelines)
+        self.assertNotIn("ESP_PARTICLE", pipelines)
+        self.assertEqual(list(RESOURCES.rglob("target_esp_field.*")), [])
+        self.assertEqual(list(RESOURCES.rglob("target_esp_particle.*")), [])
 
 
 if __name__ == "__main__":
