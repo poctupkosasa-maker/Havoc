@@ -173,21 +173,35 @@ public final class ConsoleLibraryView {
       // Reserve room for the arrow controls on the right edge.
       int capacity = l.capacity();
       int first = Math.clamp(selected - 1, 0, Math.max(0, cards.size() - capacity));
-      int x = l.margin();
-      for (int slot = 0; slot < tiles.size(); slot++) {
-         TileButton tile = tiles.get(slot);
-         int index = first + slot;
-         tile.index = index;
-         tile.visible = slot < capacity && index < cards.size();
+      int end = Math.min(cards.size(), first + capacity);
+      // Keep the same widget bound to the same card while the visible window moves.
+      // Screen.mouseClicked assigns focus after onPress; recycling that widget mid-click
+      // would make Enter act on a different card.
+      for (TileButton tile : tiles) {
+         tile.visible = tile.index >= first && tile.index < end;
          tile.active = tile.visible && !optionsOpen;
-         if (tile.visible) {
-            int size = index == selected ? l.largeTile() : l.smallTile();
-            tile.setPosition(x, l.rowY());
-            tile.setWidth(size);
-            tile.setHeight(size);
-            tile.setMessage(Component.literal(cards.get(index).title()));
-            x += size + l.gap();
+      }
+      int x = l.margin();
+      for (int index = first; index < end; index++) {
+         TileButton tile = null;
+         for (TileButton candidate : tiles) {
+            if (candidate.index == index) { tile = candidate; break; }
          }
+         if (tile == null) {
+            for (TileButton candidate : tiles) {
+               if (!candidate.visible) { tile = candidate; break; }
+            }
+         }
+         if (tile == null) break;
+         tile.index = index;
+         tile.visible = true;
+         tile.active = !optionsOpen;
+         int size = index == selected ? l.largeTile() : l.smallTile();
+         tile.setPosition(x, l.rowY());
+         tile.setWidth(size);
+         tile.setHeight(size);
+         tile.setMessage(Component.literal(cards.get(index).title()));
+         x += size + l.gap();
       }
       previous.active = !optionsOpen && !cards.isEmpty() && selected > 0;
       next.active = !optionsOpen && !cards.isEmpty() && selected < cards.size() - 1;
@@ -236,7 +250,7 @@ public final class ConsoleLibraryView {
    }
 
    private final class TileButton extends Button {
-      private int index;
+      private int index = -1;
       private final ConsoleStyle.FocusAnimation focus = new ConsoleStyle.FocusAnimation();
 
       private TileButton() {
