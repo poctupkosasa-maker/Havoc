@@ -28,18 +28,15 @@ public final class ConsoleStyle {
 
    public static void button(GuiGraphicsExtractor graphics, float x, float y, float width, float height,
                              boolean enabled, float focus, float alpha, boolean primary) {
-      float radius = Math.min(9.0F, height * 0.45F);
-      int base = primary ? 0xFFE5EBF5 : ColorUtil.interpolate(0xE0192335, 0xF0384A66, focus);
+      float radius = height * 0.5F;
+      int base = primary ? 0xFFE5EBF5 : ColorUtil.interpolate(0xED1F2531, 0xF03B4557, focus);
       if (!enabled) {
          base = 0xA0141C2A;
       }
       RenderUtil.drawRoundRect(graphics, x, y, width, height, radius, ColorUtil.multiplyAlpha(base, alpha));
-      RenderUtil.drawBorder(graphics, x, y, width, height, radius,
-         ColorUtil.multiplyAlpha(enabled ? 0xFFEBF3FF : 0xFF506079, alpha * (enabled ? 0.15F + focus * 0.85F : 0.2F)),
-         1.0F, 0.0F, 0.5F);
       if (enabled && focus > 0.02F) {
          RenderUtil.drawBorder(graphics, x - 2.0F, y - 2.0F, width + 4.0F, height + 4.0F, radius + 2.0F,
-            ColorUtil.multiplyAlpha(0xFFB6D7FF, alpha * focus * 0.7F), 1.0F, 0.0F, 0.5F);
+            ColorUtil.multiplyAlpha(0xFFB6D7FF, alpha * focus * 0.65F), 1.0F, 0.0F, 0.5F);
       }
    }
 }
