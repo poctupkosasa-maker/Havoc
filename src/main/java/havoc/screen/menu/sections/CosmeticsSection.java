@@ -1,18 +1,13 @@
 package havoc.screen.menu.sections;
 
 import havoc.Havoc;
-import havoc.cosmetic.CosmeticRegistry;
-import havoc.module.impl.visuals.Cosmetics;
 import havoc.module.impl.visuals.ItemReplacer;
 import havoc.render.RenderUtil;
 import havoc.render.font.GFonts;
 import havoc.screen.menu.UiAnimationEngine;
 import havoc.utilites.color.ClientColors;
 import havoc.utilites.color.ColorUtil;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.world.item.ItemStack;
@@ -26,8 +21,7 @@ public final class CosmeticsSection {
    private static final float CARD_GAP = 6.0F;
    private static final float CARD_H = 82.0F;
    private static final float SCROLL_STEP = 34.0F;
-   private static final List<String> TABS = List.of("Модель", "Мечи", "Аксессуары");
-   private int activeTab = 1;
+   private static final List<String> TABS = List.of("Мечи");
    private float scrollTarget;
    private float scroll;
 
@@ -48,7 +42,7 @@ public final class CosmeticsSection {
 
       for (int i = 0; i < TABS.size(); i++) {
          float w = this.tabWidth(TABS.get(i));
-         boolean selected = this.activeTab == i;
+         boolean selected = true;
          boolean hovered = this.hovered(mouseX, mouseY, tabX, l.tabsY, w, 18.0F);
          float hoverState = animation.animate01("cosmetics:tab:hover:" + i, hovered ? 1.0F : 0.0F, 12.0F, 0.0F);
          int idleText = ColorUtil.interpolate(ClientColors.CATEGORY_INACTIVE, ClientColors.TEXT_PRIMARY, hoverState * 0.36F);
@@ -69,168 +63,7 @@ public final class CosmeticsSection {
       RenderUtil.drawBorder(
          context, l.x, l.bodyY, l.w, l.bodyH, 6.0F, ColorUtil.multiplyAlpha(ClientColors.CATEGORY_BACKGROUND_OUTLINE, alpha), 1.0F, 0.0F, 0.5F
       );
-      if (this.activeTab == 1) {
-         this.renderSwords(context, animation, l, mouseX, mouseY, alpha);
-      } else if (this.activeTab == 2) {
-         this.renderCosmeticGrid(context, animation, l, mouseX, mouseY, alpha);
-      } else {
-         this.renderRemoveCard(context, l, "Убрать модель", alpha);
-         this.renderEmpty(context, l, alpha);
-      }
-   }
-
-   private final Map<String, Float> cosmeticScrolls = new HashMap<>();
-   private final List<Integer> visibleCosmetics = new ArrayList<>();
-
-   private void renderCosmeticGrid(
-      GuiGraphicsExtractor context, UiAnimationEngine animation, Layout l, int mouseX, int mouseY, float alpha
-   ) {
-      this.visibleCosmetics.clear();
-      for (int i = 0; i < CosmeticRegistry.TOTAL; i++) {
-         this.visibleCosmetics.add(i);
-      }
-
-      Cosmetics cosmetics = Havoc.getInstance().getModuleManager().getModule(Cosmetics.class);
-      int columns = 3;
-      float cardW = (l.w - 8.0F - 6.0F * (columns - 1)) / columns;
-      int itemCount = this.visibleCosmetics.size() + 1;
-      int rows = (itemCount + columns - 1) / columns;
-      float contentH = rows * 82.0F + Math.max(0, rows - 1) * 6.0F;
-      float maxScroll = Math.max(0.0F, contentH - (l.bodyH - 8.0F));
-      float scrollKey = this.clamp(this.cosmeticScrolls.getOrDefault("all", 0.0F), 0.0F, maxScroll);
-      this.cosmeticScrolls.put("all", scrollKey);
-      float scroll = animation.animate("cosmetics:all:scroll", scrollKey, 24.0F, this.lastAllScroll);
-      this.lastAllScroll = scroll;
-      context.enableScissor((int)l.x + 1, (int)l.bodyY + 1, (int)(l.x + l.w - 1.0F), (int)(l.bodyY + l.bodyH - 1.0F));
-
-      for (int i = 0; i < itemCount; i++) {
-         int col = i % columns;
-         int row = i / columns;
-         float x = l.x + 4.0F + col * (cardW + 6.0F);
-         float y = l.bodyY + 4.0F + row * 88.0F - scroll;
-         if (!(y + 82.0F < l.bodyY) && !(y > l.bodyY + l.bodyH)) {
-            boolean removeCard = i == 0;
-            int cosmeticIndex = removeCard ? -1 : this.visibleCosmetics.get(i - 1);
-            String label = removeCard ? "Убрать всё" : CosmeticRegistry.label(cosmeticIndex);
-            boolean isSelected = cosmetics != null
-               && (removeCard ? this.allEmpty(cosmetics) : cosmetics.selectedIndex(CosmeticRegistry.type(cosmeticIndex)) == cosmeticIndex);
-            boolean hover = this.hovered(mouseX, mouseY, x, y, cardW, 82.0F);
-            float state = animation.animate01(
-               "cosmetics:all:" + i, isSelected ? 1.0F : (hover ? 0.38F : 0.0F), 11.0F, isSelected ? 1.0F : 0.0F
-            );
-            int bg = ColorUtil.multiplyAlpha(ColorUtil.interpolate(ClientColors.SETTINGS_BACKGROUND, ClientColors.CATEGORY_ACCENT, state * 0.18F), alpha);
-            int outline = ColorUtil.multiplyAlpha(ColorUtil.interpolate(ClientColors.SETTINGS_OUTLINE, ClientColors.CATEGORY_ACCENT, state), alpha);
-            RenderUtil.drawRoundRect(context, x, y, cardW, 82.0F, 5.0F, bg);
-            RenderUtil.drawBorder(context, x, y, cardW, 82.0F, 5.0F, outline, 0.0F, 0.5F, 1.0F);
-            if (removeCard) {
-               this.drawRemoveSymbol(context, x, y, cardW, alpha);
-            } else {
-               this.drawCosmeticIcon(context, cosmeticIndex, x, y, cardW, alpha);
-            }
-
-            RenderUtil.drawTextFadeRight(
-               context, label, x + 5.0F, y + 82.0F - 12.0F, ColorUtil.multiplyAlpha(ClientColors.TEXT_PRIMARY, alpha), GFonts.MEDIUM, 6.0F, cardW - 10.0F, 5.0F
-            );
-         }
-      }
-
-      context.disableScissor();
-   }
-
-   private float lastAllScroll;
-
-   private static boolean allEmpty(Cosmetics cosmetics) {
-      for (String type : Cosmetics.TYPES) {
-         if (cosmetics.selectedIndex(type) >= 0) {
-            return false;
-         }
-      }
-
-      return true;
-   }
-
-   private void drawCosmeticIcon(GuiGraphicsExtractor context, int index, float x, float y, float cardW, float alpha) {
-      float size = 46.0F;
-      float iconX = x + (cardW - size) * 0.5F;
-      float iconY = y + 8.0F;
-      java.awt.image.BufferedImage image = COSMETIC_THUMBS.get(index);
-      if (image == null && !COSMETIC_THUMBS.containsKey(index)) {
-         COSMETIC_THUMBS.put(index, loadThumb(index));
-      }
-
-      image = COSMETIC_THUMBS.get(index);
-      if (image != null) {
-         net.minecraft.resources.Identifier id = THUMB_IDENTIFIERS.computeIfAbsent(
-            index, i -> net.minecraft.resources.Identifier.fromNamespaceAndPath("havoc", "cosmetic_thumb_" + i)
-         );
-         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-         if (!THUMB_REGISTERED.contains(id)) {
-            try (
-               java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-            ) {
-               javax.imageio.ImageIO.write(image, "png", out);
-               net.minecraft.client.renderer.texture.DynamicTexture texture = new net.minecraft.client.renderer.texture.DynamicTexture(
-                     () -> "havoc cosmetic thumb " + index, com.mojang.blaze3d.platform.NativeImage.read(out.toByteArray())
-                  );
-               texture.upload();
-               mc.getTextureManager().register(id, texture);
-               THUMB_REGISTERED.add(id);
-            } catch (Exception ignored) {
-            }
-         }
-
-         if (THUMB_REGISTERED.contains(id)) {
-            RenderUtil.drawImage(context, id, iconX, iconY, size, size, 3.0F, ColorUtil.multiplyAlpha(ColorUtil.rgba(255, 255, 255, 255), alpha), 1.0F);
-            return;
-         }
-      }
-
-      RenderUtil.drawRoundRect(context, iconX, iconY, size, size, 3.0F, ColorUtil.multiplyAlpha(ClientColors.HUD_INSET, alpha * 0.5F));
-      String glyph = "\uE003";
-      float gw = RenderUtil.getTextWidth(glyph, havoc.render.font.GFonts.NOTIFICATION_ICONS, 14.0F);
-      RenderUtil.drawText(
-         context,
-         glyph,
-         iconX + (size - gw) * 0.5F,
-         iconY + size * 0.5F - 7.0F,
-         ColorUtil.multiplyAlpha(ClientColors.CATEGORY_INACTIVE, alpha),
-         havoc.render.font.GFonts.NOTIFICATION_ICONS,
-         14.0F
-      );
-   }
-
-   private static final Map<Integer, java.awt.image.BufferedImage> COSMETIC_THUMBS = new HashMap<>();
-   private static final Map<Integer, net.minecraft.resources.Identifier> THUMB_IDENTIFIERS = new HashMap<>();
-   private static final java.util.Set<net.minecraft.resources.Identifier> THUMB_REGISTERED = new java.util.HashSet<>();
-
-   private static java.awt.image.BufferedImage loadThumb(int index) {
-      try (
-         java.io.InputStream input = CosmeticsSection.class.getResourceAsStream(
-            "/assets/havoc/textures/cosmetics/cosmetic_" + index + ".png"
-         );
-      ) {
-         if (input == null) {
-            return null;
-         } else {
-            java.awt.image.BufferedImage full = javax.imageio.ImageIO.read(input);
-            if (full == null) {
-               return null;
-            } else {
-               int w = full.getWidth();
-               int h = full.getHeight();
-               int cropH = Math.max(1, Math.min(h, w));
-               java.awt.image.BufferedImage top = full.getSubimage(0, 0, w, cropH);
-               java.awt.image.BufferedImage thumb = new java.awt.image.BufferedImage(64, 64, java.awt.image.BufferedImage.TYPE_INT_ARGB);
-               java.awt.Graphics2D g = thumb.createGraphics();
-               g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-               g.drawImage(top, 0, 0, 64, 64, null);
-               g.dispose();
-               return thumb;
-            }
-         }
-      } catch (Exception ignored) {
-         return null;
-      }
+      this.renderSwords(context, animation, l, mouseX, mouseY, alpha);
    }
 
    private void renderSwords(GuiGraphicsExtractor context, UiAnimationEngine animation, CosmeticsSection.Layout l, int mouseX, int mouseY, float alpha) {
@@ -297,31 +130,6 @@ public final class CosmeticsSection {
       }
    }
 
-   private void renderEmpty(GuiGraphicsExtractor context, CosmeticsSection.Layout l, float alpha) {
-      String title = this.activeTab == 0 ? "Модели появятся позже" : "Аксессуары появятся позже";
-      float titleW = RenderUtil.getTextWidth(title, GFonts.MEDIUM, 7.0F);
-      RenderUtil.drawText(
-         context,
-         title,
-         l.x + (l.w - titleW) * 0.5F,
-         l.bodyY + l.bodyH * 0.62F,
-         ColorUtil.multiplyAlpha(ClientColors.CATEGORY_INACTIVE, alpha),
-         GFonts.MEDIUM,
-         7.0F
-      );
-   }
-
-   private void renderRemoveCard(GuiGraphicsExtractor context, CosmeticsSection.Layout l, String label, float alpha) {
-      float x = l.x + 5.0F;
-      float y = l.bodyY + 5.0F;
-      float w = 82.0F;
-      float h = 58.0F;
-      RenderUtil.drawRoundRect(context, x, y, w, h, 5.0F, ColorUtil.multiplyAlpha(ClientColors.SETTINGS_BACKGROUND, alpha));
-      RenderUtil.drawBorder(context, x, y, w, h, 5.0F, ColorUtil.multiplyAlpha(ClientColors.SETTINGS_OUTLINE, alpha), 0.0F, 0.5F, 1.0F);
-      this.drawRemoveSymbol(context, x, y - 8.0F, w, alpha);
-      RenderUtil.drawText(context, label, x + 5.0F, y + h - 12.0F, ColorUtil.multiplyAlpha(ClientColors.TEXT_PRIMARY, alpha), GFonts.MEDIUM, 6.0F);
-   }
-
    private void drawRemoveSymbol(GuiGraphicsExtractor context, float x, float y, float w, float alpha) {
       float cx = x + w * 0.5F;
       float cy = y + 34.0F;
@@ -339,50 +147,11 @@ public final class CosmeticsSection {
       for (int i = 0; i < TABS.size(); i++) {
          float w = this.tabWidth(TABS.get(i));
          if (this.hovered(click.x(), click.y(), tabX, l.tabsY, w, 18.0F)) {
-            this.activeTab = i;
             this.scrollTarget = 0.0F;
             return true;
          }
 
          tabX += w + 5.0F;
-      }
-
-      if (this.activeTab == 0) {
-         return this.hovered(click.x(), click.y(), l.x + 5.0F, l.bodyY + 5.0F, 82.0F, 58.0F);
-      } else if (this.activeTab == 2) {
-         if (!this.hovered(click.x(), click.y(), l.x, l.bodyY, l.w, l.bodyH)) {
-            return false;
-         }
-
-         Cosmetics cosmetics = Havoc.getInstance().getModuleManager().getModule(Cosmetics.class);
-         if (cosmetics != null) {
-            int columns = 3;
-            float cardW = (l.w - 8.0F - 6.0F * (columns - 1)) / columns;
-            float scroll = this.lastAllScroll;
-
-            for (int i = 0; i < CosmeticRegistry.TOTAL + 1; i++) {
-               float x = l.x + 4.0F + i % columns * (cardW + 6.0F);
-               float y = l.bodyY + 4.0F + i / columns * 88.0F - scroll;
-               if (this.hovered(click.x(), click.y(), x, y, cardW, 82.0F)) {
-                  if (i == 0) {
-                     for (String type : Cosmetics.TYPES) {
-                        cosmetics.selectIndex(type, -1);
-                     }
-                  } else {
-                     int cosmeticIndex = i - 1;
-                     cosmetics.selectIndex(CosmeticRegistry.type(cosmeticIndex), cosmeticIndex);
-                     if (!cosmetics.isEnable()) {
-                        cosmetics.setEnable(true);
-                     }
-                  }
-
-                  Havoc.getInstance().markConfigDirty();
-                  return true;
-               }
-            }
-         }
-
-         return true;
       }
 
       if (!this.hovered(click.x(), click.y(), l.x, l.bodyY, l.w, l.bodyH)) {
@@ -422,12 +191,8 @@ public final class CosmeticsSection {
 
    public boolean handleScroll(double mouseX, double mouseY, double amount, float panelX, float panelY, float panelWidth, float panelHeight) {
       CosmeticsSection.Layout l = this.layout(panelX, panelY, panelWidth, panelHeight);
-      if (this.activeTab == 1 && this.hovered(mouseX, mouseY, l.x, l.bodyY, l.w, l.bodyH)) {
+      if (this.hovered(mouseX, mouseY, l.x, l.bodyY, l.w, l.bodyH)) {
          this.scrollTarget -= (float)amount * 34.0F;
-         return true;
-      } else if (this.activeTab == 2 && this.hovered(mouseX, mouseY, l.x, l.bodyY, l.w, l.bodyH)) {
-         float maxScroll = Math.max(0.0F, (CosmeticRegistry.TOTAL + 1) / 3 * 88.0F - l.bodyH);
-         this.cosmeticScrolls.put("all", this.clamp(this.cosmeticScrolls.getOrDefault("all", 0.0F) - (float)amount * 34.0F, 0.0F, maxScroll));
          return true;
       } else {
          return false;
