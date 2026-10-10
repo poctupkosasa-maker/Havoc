@@ -1,0 +1,23 @@
+package havoc.mixin;
+
+import havoc.module.impl.visuals.ItemReplacer;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.world.entity.ItemOwner;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(ItemModelResolver.class)
+public abstract class ItemReplacerItemModelResolverMixin {
+   @Inject(method = "updateForTopItem", at = @At("RETURN"))
+   private void havoc$prepareItemReplacement(
+      ItemStackRenderState renderState, ItemStack stack, ItemDisplayContext displayContext, Level level, ItemOwner owner, int seed, CallbackInfo ci
+   ) {
+      ItemReplacer.prepareReplacement(renderState, stack, displayContext);
+   }
+}

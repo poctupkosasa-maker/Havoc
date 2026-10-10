@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.x150.renderer.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "BufferBuilderAccessor",
+    "DrawContextAccessor",
+    "GuiGraphicsExtractorMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "hit_moan1": { "sounds": ["havoc:luma/moan1"] },
+  "hit_moan2": { "sounds": ["havoc:luma/moan2"] },
+  "hit_moan3": { "sounds": ["havoc:luma/moan3"] },
+  "hit_moan4": { "sounds": ["havoc:luma/moan4"] },
+  "hit_metallic": { "sounds": ["havoc:luma/metallic"] },
+  "hit_crime": { "sounds": ["havoc:luma/crime"] },
+  "module_enable": { "sounds": ["havoc:luma/module_enable"] },
+  "module_disable": { "sounds": ["havoc:luma/module_disable"] },
+  "module_on": { "sounds": ["havoc:luma/on"] },
+  "module_off": { "sounds": ["havoc:luma/off"] }
+}

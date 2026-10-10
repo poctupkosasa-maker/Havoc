@@ -1,0 +1,27 @@
+{
+  "vertex": "havoc:core/head_texture",
+  "fragment": "havoc:core/head_texture",
+  "samplers": [
+    "Sampler0"
+  ],
+  "attributes": [
+    "Position",
+    "UV0",
+    "Color",
+    "UV1",
+    "RadiusXY",
+    "RadiusZW",
+    "ExtraData1",
+    "ExtraData2"
+  ],
+  "uniforms": {
+    "ModelViewMat": {
+      "type": "matrix4x4",
+      "count": 1
+    },
+    "ProjMat": {
+      "type": "matrix4x4",
+      "count": 1
+    }
+  }
+}

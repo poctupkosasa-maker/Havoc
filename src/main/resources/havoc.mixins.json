@@ -1,0 +1,56 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "havoc.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "LivingEntityRendererAddLayerAccessor"
+  ],
+  "client": [
+    "BetterMinecraftGameRendererMixin",
+    "CameraMixin",
+    "CapeTextureSwapMixin",
+    "ChatComponentMixin",
+    "ChatScreenMixin",
+    "ClientPlayNetworkHandlerMixin",
+    "ClientConnectionMixin",
+    "CommandSuggestionsAccessor",
+    "ClientPlayerEntityMixin",
+    "ClientPlayerInteractionManagerMixin",
+    "CosmeticLayerMixin",
+    "FireworkRocketEntityMixin",
+    "FogRendererMixin",
+    "GameRendererFrameMixin",
+    "HeldItemRendererMixin",
+    "InGameHudMixin",
+    "InGameOverlayRendererAccessor",
+    "ItemReplacerItemModelResolverMixin",
+    "KeyboardInputMixin",
+    "KeyboardMixin",
+    "JoinMultiplayerScreenMixin",
+    "LevelRendererSkyMixin",
+    "LivingEntityRendererMixin",
+    "MinecraftClientMixin",
+    "MinecraftUserAccessor",
+    "HavocTitleScreenSwapMixin",
+    "TitleScreenSwapMixin",
+    "MouseMixin",
+    "NoRenderDarknessEffectFogModifierMixin",
+    "NoRenderGameRendererMixin",
+    "NoRenderInGameOverlayRendererMixin",
+    "NoRenderTotemAnimationMixin",
+    "ServerListMixin",
+    "SkyRenderingMixin",
+    "RemoteBlackoutHudMixin",
+    "RemoteBlackoutScreenMixin",
+    "TimelineTimeMixin",
+    "WorldTimeMixin",
+    "SwingDurationMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}

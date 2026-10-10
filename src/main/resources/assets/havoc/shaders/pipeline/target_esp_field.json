@@ -1,0 +1,20 @@
+{
+    "vertex": "havoc:core/target_esp_field",
+    "fragment": "havoc:core/target_esp_field",
+    "samplers": [],
+    "attributes": [
+        "Position",
+        "UV0",
+        "Color"
+    ],
+    "uniforms": {
+        "ModelViewMat": {
+            "type": "matrix4x4",
+            "count": 1
+        },
+        "ProjMat": {
+            "type": "matrix4x4",
+            "count": 1
+        }
+    }
+}

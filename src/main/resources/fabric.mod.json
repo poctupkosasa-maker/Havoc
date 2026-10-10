@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "havoc",
+  "version": "1.0-SNAPSHOT",
+  "name": "Havoc Client",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/havoc/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": [
+      "havoc.Havoc"
+    ]
+  },
+  "mixins": [
+    "havoc.mixins.json",
+    "havoc-renderer.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "\u003e\u003d0.19.3",
+    "fabric-api": "*",
+    "minecraft": "26.2",
+    "java": "\u003e\u003d25"
+  },
+  "jars": [
+    {
+      "file": "META-INF/jars/lwjgl-harfbuzz-3.3.3-natives-linux.jar"
+    },
+    {
+      "file": "META-INF/jars/lwjgl-harfbuzz-3.3.3-natives-macos.jar"
+    },
+    {
+      "file": "META-INF/jars/lwjgl-harfbuzz-3.3.3-natives-windows.jar"
+    },
+    {
+      "file": "META-INF/jars/lwjgl-harfbuzz-3.3.3.jar"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "atlas": {"distanceRange": 10, "width": 512, "height": 128},
+  "metrics": {"lineHeight": 1.0, "ascender": 0.8, "descender": -0.2},
+  "glyphs": [
+    {"unicode":57344,"advance":1.0,"planeBounds":{"left":0.0,"top":0.8,"right":1.0,"bottom":-0.2},"atlasBounds":{"left":42,"top":86,"right":86,"bottom":42}},
+    {"unicode":57345,"advance":1.0,"planeBounds":{"left":0.0,"top":0.8,"right":1.0,"bottom":-0.2},"atlasBounds":{"left":170,"top":86,"right":214,"bottom":42}},
+    {"unicode":57346,"advance":1.0,"planeBounds":{"left":0.0,"top":0.8,"right":1.0,"bottom":-0.2},"atlasBounds":{"left":298,"top":86,"right":342,"bottom":42}},
+    {"unicode":57347,"advance":2.7777777,"planeBounds":{"left":0.0,"top":0.8,"right":2.7777777,"bottom":-0.2},"atlasBounds":{"left":398,"top":82,"right":498,"bottom":46}}
+  ],
+  "kerning": []
+}
