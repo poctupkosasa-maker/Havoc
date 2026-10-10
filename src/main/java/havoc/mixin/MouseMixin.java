@@ -3,7 +3,6 @@ package havoc.mixin;
 import havoc.Havoc;
 import havoc.event.impl.EventKeyPress;
 import havoc.module.impl.misc.AntiCapture;
-import havoc.module.impl.visuals.Hologram;
 import havoc.utilites.rotation.SilentAimManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
@@ -20,10 +19,6 @@ public class MouseMixin {
    @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
    private void onMouseButton(long window, MouseButtonInfo input, int action, CallbackInfo ci) {
       if (window == Minecraft.getInstance().getWindow().handle()) {
-         if (Hologram.consumeClick(input.button(), action)) {
-            ci.cancel();
-            return;
-         }
          Havoc.getInstance().getEventBus().post(new EventKeyPress(Havoc.mouseButtonToBindCode(input.button()), action));
       }
    }

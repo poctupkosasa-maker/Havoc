@@ -13,7 +13,6 @@ import havoc.module.impl.visuals.ArrayListModule;
 import havoc.module.impl.visuals.Cosmetics;
 import havoc.module.impl.visuals.Interface;
 import havoc.module.impl.visuals.ItemReplacer;
-import havoc.module.impl.visuals.Hologram;
 import havoc.module.impl.visuals.KillEffect;
 import havoc.module.impl.visuals.Menu;
 import havoc.module.impl.visuals.NoRender;
@@ -35,7 +34,6 @@ public class ModuleManager {
          .addAll(
             Arrays.asList(
                new Menu(),
-               new Hologram(),
                new Interface(),
                new ArrayListModule(),
                new NoRender(),
