@@ -34,6 +34,9 @@ public final class ThemeManager {
       "Rose", coloredPreset(0xFFF472B6, 0xFFFDA4AF, 0xFF200F19, 0xFF361C2B),
       "Nord", coloredPreset(0xFF88C0D0, 0xFF81A1C1, 0xFF242933, 0xFF2E3440)
    );
+   private static final long LIST_CACHE_NANOS = 2_000_000_000L;
+   private List<ThemeEntry> cachedThemes;
+   private long cachedThemesAt;
    private final Path themeDir = ConfigManager.getRootDir().resolve("themes");
 
    public ThemeManager() {
@@ -46,6 +49,10 @@ public final class ThemeManager {
    }
 
    public List<ThemeManager.ThemeEntry> listThemes() {
+      long now = System.nanoTime();
+      if (this.cachedThemes != null && now - this.cachedThemesAt < LIST_CACHE_NANOS) {
+         return this.cachedThemes;
+      }
       List<ThemeManager.ThemeEntry> entries = new ArrayList<>();
 
       try {
@@ -74,7 +81,9 @@ public final class ThemeManager {
             return "Light".equalsIgnoreCase(b.name()) ? 1 : a.name().compareToIgnoreCase(b.name());
          }
       });
-      return entries;
+      this.cachedThemes = List.copyOf(entries);
+      this.cachedThemesAt = now;
+      return this.cachedThemes;
    }
 
    public String createTheme() {
@@ -166,6 +175,7 @@ public final class ThemeManager {
       if (safe != null && !this.isBuiltin(safe)) {
          try {
             boolean deleted = Files.deleteIfExists(this.themePath(safe));
+            this.cachedThemes = null;
             if (deleted && safe.equalsIgnoreCase(ClientTheme.getActiveThemeName())) {
                this.loadTheme(ClientTheme.isLightMode() ? "Light" : "Dark");
             }
@@ -198,6 +208,7 @@ public final class ThemeManager {
          if (Files.isRegularFile(source) && !Files.exists(target)) {
             try {
                Files.move(source, target);
+               this.cachedThemes = null;
                if (safeFrom.equalsIgnoreCase(ClientTheme.getActiveThemeName())) {
                   ClientTheme.setActiveThemeName(safeTo);
                }
@@ -216,6 +227,7 @@ public final class ThemeManager {
    }
 
    public void reload() {
+      this.cachedThemes = null;
       this.ensureBuiltins();
    }
 
@@ -305,6 +317,7 @@ public final class ThemeManager {
    }
 
    private boolean writeTheme(String name, ThemeManager.ThemeFile file) {
+      this.cachedThemes = null;
       try {
          Files.createDirectories(this.themeDir);
 

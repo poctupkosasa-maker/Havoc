@@ -122,12 +122,14 @@ public final class ConfigManager {
             Files.createDirectories(this.configDir);
          }
 
-         Files.list(this.configDir).filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".json")).forEach(path -> {
-            String fileName = path.getFileName().toString();
-            String name = fileName.substring(0, fileName.length() - 5);
-            long createdAt = this.resolveCreatedAt(path);
-            entries.add(new ConfigManager.ConfigEntry(name, createdAt));
-         });
+         try (Stream<Path> paths = Files.list(this.configDir)) {
+            paths.filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".json")).forEach(path -> {
+               String fileName = path.getFileName().toString();
+               String name = fileName.substring(0, fileName.length() - 5);
+               long createdAt = this.resolveCreatedAt(path);
+               entries.add(new ConfigManager.ConfigEntry(name, createdAt));
+            });
+         }
       } catch (IOException var3) {
       }
 
