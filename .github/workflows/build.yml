@@ -29,8 +29,9 @@ jobs:
       - name: Check console layout
         run: |
           mkdir -p build/layout-tests
-          javac -d build/layout-tests src/main/java/havoc/screen/library/LibraryLayout.java tests/java/LibraryLayoutTest.java
+          javac -d build/layout-tests src/main/java/havoc/screen/library/LibraryLayout.java src/main/java/havoc/screen/library/CarouselMotion.java tests/java/LibraryLayoutTest.java tests/java/CarouselMotionTest.java
           java -cp build/layout-tests LibraryLayoutTest
+          java -cp build/layout-tests CarouselMotionTest
       - name: Check UI and shader resources
         run: python3 -m unittest discover -s tests -v
       - name: Report Java compiler errors

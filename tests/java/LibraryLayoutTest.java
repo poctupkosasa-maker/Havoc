@@ -12,6 +12,10 @@ public final class LibraryLayoutTest {
          require(l.heroY() > l.rowY() + l.largeTile(), "hero below carousel");
          require(l.heroY() + 42 < l.actionY(), "description above action");
          require(l.actionY() + 25 < l.height() - 16, "action above footer");
+         require(l.heroY() + 37 < l.actionY(), "subtitle does not overlap action");
+         if (l.showDescription()) require(l.heroY() + 61 < l.actionY(), "extended description fits");
+         require(l.heroFontSize() <= 20, "compact title typography");
+         require(l.heroWidth() <= l.width() - 2 * l.heroX(), "hero respects margins");
          for (int count : new int[]{0, 1, 4, 12, 100}) {
             for (int selected = 0; selected < Math.max(1, count); selected++) {
                int first = l.firstVisible(selected, count);

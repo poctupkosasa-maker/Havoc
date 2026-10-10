@@ -2,7 +2,6 @@ package havoc.screen.library;
 
 import havoc.render.RenderUtil;
 import havoc.render.font.GFonts;
-import havoc.screen.menu.UiAnimationEngine;
 import havoc.screen.style.ConsoleStyle;
 import havoc.utilites.color.ColorUtil;
 import java.time.LocalTime;
@@ -10,9 +9,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
@@ -28,9 +27,9 @@ public final class ConsoleLibraryView {
    private final Button more;
    private final Button previous;
    private final Button next;
-   private final UiAnimationEngine animation = new UiAnimationEngine();
    private List<LibraryCard> cards = List.of();
    private int selected;
+   private int firstVisible;
    private String selectedId;
    private boolean optionsOpen;
    private long clockSecond;
@@ -168,12 +167,19 @@ public final class ConsoleLibraryView {
       if (next != null) next.setPosition(owner.width - l.margin() - 22, l.rowY());
    }
 
-   private void layoutTiles() {
+   private void layoutTiles() { this.layoutTiles(false); }
+
+   private void layoutTiles(boolean advance) {
+      long now = System.nanoTime();
       LibraryLayout l = layout();
       // Reserve room for the arrow controls on the right edge.
       int capacity = l.capacity();
       int first = Math.clamp(selected - 1, 0, Math.max(0, cards.size() - capacity));
       int end = Math.min(cards.size(), first + capacity);
+      boolean populated = tiles.stream().anyMatch(tile -> tile.visible);
+      int shift = first - this.firstVisible;
+      boolean jump = Math.abs(shift) >= capacity;
+      this.firstVisible = first;
       // Keep the same widget bound to the same card while the visible window moves.
       // Screen.mouseClicked assigns focus after onPress; recycling that widget mid-click
       // would make Enter act on a different card.
@@ -193,14 +199,25 @@ public final class ConsoleLibraryView {
             }
          }
          if (tile == null) break;
+         boolean recycled = tile.index != index;
          tile.index = index;
          tile.visible = true;
          tile.active = !optionsOpen;
          int size = index == selected ? l.largeTile() : l.smallTile();
-         tile.setPosition(x, l.rowY());
-         tile.setWidth(size);
-         tile.setHeight(size);
-         tile.setMessage(Component.literal(cards.get(index).title()));
+         if (recycled || jump) {
+            float entryOffset = populated && !jump ? Math.signum(shift) * (l.largeTile() + l.gap()) : 0;
+            tile.motion.snap(x + entryOffset, l.rowY(), size);
+         }
+         tile.motion.target(x, l.rowY(), size);
+         if (advance) tile.motion.update(now);
+         tile.setPosition(tile.motion.x(), tile.motion.y());
+         tile.setWidth(tile.motion.size());
+         tile.setHeight(tile.motion.size());
+         String title = cards.get(index).title();
+         if (!title.equals(tile.getMessage().getString())) {
+            tile.setMessage(Component.literal(title));
+            tile.setTooltip(Tooltip.create(Component.literal(title)));
+         }
          x += size + l.gap();
       }
       previous.active = !optionsOpen && !cards.isEmpty() && selected > 0;
@@ -208,9 +225,8 @@ public final class ConsoleLibraryView {
    }
 
    public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-      animation.beginFrame(Math.max(1, Minecraft.getInstance().getFps()));
       layoutActions();
-      layoutTiles();
+      layoutTiles(true);
       LibraryLayout l = layout();
       LibraryArtwork.background(graphics, owner.width, owner.height, servers);
       long second = System.currentTimeMillis() / 1000;
@@ -220,8 +236,12 @@ public final class ConsoleLibraryView {
       if (card != null) {
          TileButton tile = tiles.stream().filter(t -> t.visible && t.index == selected).findFirst().orElse(null);
          if (tile != null) {
+            int labelY = l.rowY() + l.smallTile() + 8;
+            for (TileButton neighbor : tiles) {
+               if (neighbor.visible && neighbor.index > selected) labelY = Math.max(labelY, neighbor.getY() + neighbor.getHeight() + 8);
+            }
             RenderUtil.drawTextFadeRight(graphics, card.title(), tile.getX() + tile.getWidth() + 8,
-               l.rowY() + l.smallTile() + 8, ConsoleStyle.TEXT, GFonts.MEDIUM, 9,
+               labelY, ConsoleStyle.TEXT, GFonts.MEDIUM, 9,
                Math.max(10, owner.width - tile.getX() - tile.getWidth() - 24), 8);
          }
       }
@@ -230,9 +250,9 @@ public final class ConsoleLibraryView {
       RenderUtil.drawText(graphics, servers ? "HAVOC  /  MULTIPLAYER" : "MINECRAFT  /  ТВОЯ КОЛЛЕКЦИЯ",
          l.heroX(), l.heroY() - 15, ConsoleStyle.MUTED, GFonts.MEDIUM, 6.5F);
       RenderUtil.drawTextFadeRight(graphics, title, l.heroX(), l.heroY(), ConsoleStyle.TEXT, GFonts.BOLD,
-         Math.min(30, owner.width / 17.0F), owner.width - l.heroX() * 2, 12);
-      RenderUtil.drawTextFadeRight(graphics, description.replace('\n', ' '), l.heroX(), l.heroY() + 34,
-         ConsoleStyle.MUTED, GFonts.MEDIUM, 8, owner.width - l.heroX() * 2, 10);
+         l.heroFontSize(), l.heroWidth(), 10);
+      RenderUtil.drawTextFadeRight(graphics, description.replace('\n', ' '), l.heroX(), l.heroY() + 31,
+         ConsoleStyle.MUTED, GFonts.MEDIUM, 8, l.heroWidth(), 10);
       if (card != null && owner.width >= 520) {
          float x = owner.width - l.margin() - 155;
          RenderUtil.drawRoundRect(graphics, x, l.actionY() - 2, 155, 32, 4, 0xC00B101A);
@@ -251,6 +271,7 @@ public final class ConsoleLibraryView {
 
    private final class TileButton extends Button {
       private int index = -1;
+      private final CarouselMotion motion = new CarouselMotion();
       private final ConsoleStyle.FocusAnimation focus = new ConsoleStyle.FocusAnimation();
 
       private TileButton() {
@@ -259,7 +280,7 @@ public final class ConsoleLibraryView {
 
       @Override
       public void onPress(net.minecraft.client.input.InputWithModifiers input) {
-         if (index >= cards.size()) return;
+         if (index < 0 || index >= cards.size()) return;
          if (index == selected && actions.getFirst().active) {
             actions.getFirst().onPress(input);
          } else {
@@ -269,17 +290,14 @@ public final class ConsoleLibraryView {
 
       @Override
       protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-         if (index >= cards.size()) return;
+         if (index < 0 || index >= cards.size()) return;
          LibraryCard card = cards.get(index);
          boolean chosen = index == selected;
          float f = focus.update(chosen || isHoveredOrFocused());
          Identifier image = card.image();
-         RenderUtil.drawImage(graphics, image == null ? (servers ? LibraryArtwork.SERVERS : LibraryArtwork.WORLDS) : image,
+         if (image == null || image.equals(LibraryArtwork.SERVERS) || image.equals(LibraryArtwork.WORLDS)) image = LibraryArtwork.cover(servers);
+         RenderUtil.drawImage(graphics, image,
             getX(), getY(), getWidth(), getHeight(), 6, -1, 1);
-         RenderUtil.drawRoundRectGradientQuad(graphics, getX(), getY(), getWidth(), getHeight(), 6,
-            0x05080C14, 0xDD080C14, 0xDD080C14, 0x05080C14);
-         RenderUtil.drawTextFadeRight(graphics, card.title(), getX() + 4, getY() + getHeight() - 13,
-            ConsoleStyle.TEXT, GFonts.SEMIBOLD, chosen ? 6.5F : 5.5F, getWidth() - 8, 4);
          RenderUtil.drawBorder(graphics, getX() - 2, getY() - 2, getWidth() + 4, getHeight() + 4, 8,
             ColorUtil.multiplyAlpha(0xFFDFE7F4, f * 0.9F), 1, 0, 0.5F);
       }

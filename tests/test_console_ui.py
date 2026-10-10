@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import re
+import struct
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,6 +42,23 @@ class ConsoleUiTests(unittest.TestCase):
         source = (JAVA / "mixin/HavocTitleScreenSwapMixin.java").read_text()
         self.assertIn("screen.getClass() == SelectWorldScreen.class", source)
         self.assertIn("screen.getClass() == JoinMultiplayerScreen.class", source)
+
+    def test_console_v2_covers_are_square(self):
+        for name in ("console_world_cover", "console_server_cover"):
+            data = (RESOURCES / f"assets/havoc/textures/gui/{name}.png").read_bytes()
+            self.assertEqual(data[:8], b"\x89PNG\r\n\x1a\n")
+            self.assertEqual(struct.unpack(">II", data[16:24]), (512, 512))
+
+    def test_console_v2_removes_pink_tiles_and_oversized_slogan(self):
+        title = (JAVA / "screen/title/HavocTitleScreen.java").read_text()
+        self.assertNotIn("menu_background.png", title)
+        self.assertNotIn("Твой мир. Твои правила.", title)
+        self.assertIn("this.updateTileBounds();", title)
+        self.assertIn("LibraryArtwork.cover(index == 1)", title)
+        self.assertIn("this::toggleQuickActions", title)
+        library = (JAVA / "screen/library/ConsoleLibraryView.java").read_text()
+        self.assertIn("tile.setPosition(tile.motion.x(), tile.motion.y())", library)
+        self.assertNotIn("card.title(), getX() + 4", library)
 
 
 if __name__ == "__main__":
