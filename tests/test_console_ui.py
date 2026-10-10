@@ -29,6 +29,19 @@ class ConsoleUiTests(unittest.TestCase):
             values = re.search(rf'String\[\] {field} = \{{([^}}]+)\}}', source).group(1)
             self.assertEqual(len(re.findall(r'"([^"]+)"', values)), 5, field)
 
+    def test_library_accessors_registered(self):
+        config = json.loads((RESOURCES / "havoc.mixins.json").read_text())
+        for name in ("ConsoleWorldScreenAccessor", "ConsoleWorldListAccessor", "ConsoleWorldEntryAccessor",
+                     "ConsoleServerScreenAccessor", "ConsoleServerEntryAccessor"):
+            self.assertEqual(config["client"].count(name), 1)
+            self.assertTrue((JAVA / f"mixin/{name}.java").is_file())
+        self.assertTrue((RESOURCES / "assets/havoc/textures/gui/console_servers.png").is_file())
+
+    def test_library_swap_does_not_replace_custom_subclasses(self):
+        source = (JAVA / "mixin/HavocTitleScreenSwapMixin.java").read_text()
+        self.assertIn("screen.getClass() == SelectWorldScreen.class", source)
+        self.assertIn("screen.getClass() == JoinMultiplayerScreen.class", source)
+
 
 if __name__ == "__main__":
     unittest.main()

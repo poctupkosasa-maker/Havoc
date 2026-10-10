@@ -26,7 +26,12 @@ jobs:
           java-version: '25'
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-      - name: Check shader identifiers
+      - name: Check console layout
+        run: |
+          mkdir -p build/layout-tests
+          javac -d build/layout-tests src/main/java/havoc/screen/library/LibraryLayout.java tests/java/LibraryLayoutTest.java
+          java -cp build/layout-tests LibraryLayoutTest
+      - name: Check UI and shader resources
         run: python3 -m unittest discover -s tests -v
       - name: Report Java compiler errors
         run: echo "::add-matcher::.github/javac-matcher.json"

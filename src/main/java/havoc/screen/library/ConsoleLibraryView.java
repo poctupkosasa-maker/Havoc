@@ -103,6 +103,17 @@ public final class ConsoleLibraryView {
       }
    }
 
+   public String selectedId() { return this.selectedId; }
+
+   public void restoreSelection(String id) { this.selectedId = id; }
+
+   public boolean isVisible(String id) {
+      for (TileButton tile : tiles) {
+         if (tile.visible && tile.index < cards.size() && cards.get(tile.index).id().equals(id)) return true;
+      }
+      return false;
+   }
+
    public void move(int amount) { this.select(this.selected + amount, true); }
 
    public boolean keyPressed(KeyEvent key) {
@@ -160,7 +171,7 @@ public final class ConsoleLibraryView {
    private void layoutTiles() {
       LibraryLayout l = layout();
       // Reserve room for the arrow controls on the right edge.
-      int capacity = Math.max(3, l.capacity() - 1);
+      int capacity = l.capacity();
       int first = Math.clamp(selected - 1, 0, Math.max(0, cards.size() - capacity));
       int x = l.margin();
       for (int slot = 0; slot < tiles.size(); slot++) {

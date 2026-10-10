@@ -24,6 +24,8 @@ import net.minecraft.server.network.EventLoopGroupHolder;
 public final class ConsoleServerScreen extends JoinMultiplayerScreen {
    private final Screen parent;
    private ConsoleLibraryView view;
+   private String rememberedSelection;
+   private final Map<ServerData, Long> pingStarted = new IdentityHashMap<>();
    private List<ServerSelectionList.Entry> displayed = List.of();
    private final Map<ServerSelectionList.OnlineServerEntry, byte[]> icons = new IdentityHashMap<>();
    private ExecutorService pingWorkers;
@@ -47,6 +49,7 @@ public final class ConsoleServerScreen extends JoinMultiplayerScreen {
       this.setFocused(null);
       this.view = new ConsoleLibraryView(this, true, actions, button -> this.addRenderableWidget(button),
          () -> this.minecraft.gui.setScreen(new ConsoleWorldScreen(this.parent)), () -> { });
+      this.view.restoreSelection(this.rememberedSelection);
       this.displayed = List.of();
       this.syncCards();
    }
@@ -66,7 +69,13 @@ public final class ConsoleServerScreen extends JoinMultiplayerScreen {
       this.syncCards();
       for (ServerSelectionList.Entry entry : displayed) {
          if (entry instanceof ServerSelectionList.OnlineServerEntry online) {
-            this.startPing(online);
+            if (view.isVisible(online.getServerData().ip)) this.startPing(online);
+            ServerData data = online.getServerData();
+            Long started = pingStarted.get(data);
+            if (started != null && data.state() == ServerData.State.PINGING && System.nanoTime() - started > 12_000_000_000L) {
+               data.setState(ServerData.State.UNREACHABLE);
+               data.motd = Component.translatable("multiplayer.status.cannot_connect");
+            }
             byte[] bytes = online.getServerData().getIconBytes();
             if (!Arrays.equals(bytes, icons.get(online))) {
                if (((ConsoleServerEntryAccessor)(Object)online).havoc$uploadIcon(bytes)) {
@@ -84,6 +93,9 @@ public final class ConsoleServerScreen extends JoinMultiplayerScreen {
       ServerData data = entry.getServerData();
       if (data.state() != ServerData.State.INITIAL || pingWorkers == null || pingWorkers.isShutdown()) return;
       data.setState(ServerData.State.PINGING);
+      data.motd = Component.translatable("multiplayer.status.pinging");
+      data.status = Component.empty();
+      pingStarted.put(data, System.nanoTime());
       final int session = generation;
       var pinger = this.getPinger();
       var client = this.minecraft;
@@ -130,13 +142,17 @@ public final class ConsoleServerScreen extends JoinMultiplayerScreen {
                return entry instanceof ServerSelectionList.OnlineServerEntry online ? online.getServerData().name : "Локальная сеть";
             }
             public String description() {
-               return entry instanceof ServerSelectionList.OnlineServerEntry online ? online.getServerData().motd.getString() : entry.getNarration().getString();
+               if (entry instanceof ServerSelectionList.OnlineServerEntry online) {
+                  Component motd = online.getServerData().motd;
+                  return motd == null ? "Проверяем соединение…" : motd.getString();
+               }
+               return entry.getNarration().getString();
             }
             public String detail() {
                if (!(entry instanceof ServerSelectionList.OnlineServerEntry online)) return "LAN · Локальная сеть";
                ServerData data = online.getServerData();
                return switch (data.state()) {
-                  case SUCCESSFUL -> data.status.getString() + "  ·  " + data.ping + " мс";
+                  case SUCCESSFUL -> (data.status == null ? "Онлайн" : data.status.getString()) + "  ·  " + data.ping + " мс";
                   case INCOMPATIBLE -> "Другая версия: " + data.version.getString();
                   case UNREACHABLE -> "Сервер недоступен";
                   default -> "Проверяем соединение…";
@@ -154,12 +170,14 @@ public final class ConsoleServerScreen extends JoinMultiplayerScreen {
 
    @Override
    public void removed() {
+      if (this.view != null) this.rememberedSelection = this.view.selectedId();
       this.generation++;
       if (pingWorkers != null) { pingWorkers.shutdownNow(); pingWorkers = null; }
       super.removed();
       for (ServerSelectionList.Entry entry : displayed) entry.close();
       displayed = List.of();
       icons.clear();
+      pingStarted.clear();
       this.view = null;
    }
 

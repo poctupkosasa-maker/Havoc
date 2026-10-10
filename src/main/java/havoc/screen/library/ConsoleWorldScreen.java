@@ -19,6 +19,7 @@ import net.minecraft.resources.Identifier;
 /** Vanilla world loading, backup/version checks and management, presented as a carousel. */
 public final class ConsoleWorldScreen extends SelectWorldScreen {
    private ConsoleLibraryView view;
+   private String rememberedSelection;
    private WorldSelectionList worlds;
    private List<WorldSelectionList.Entry> displayed = List.of();
 
@@ -26,6 +27,7 @@ public final class ConsoleWorldScreen extends SelectWorldScreen {
 
    @Override
    protected void init() {
+      if (this.view != null) this.rememberedSelection = this.view.selectedId();
       this.view = null;
       super.init();
       this.worlds = ((ConsoleWorldScreenAccessor)(Object)this).havoc$list();
@@ -34,6 +36,7 @@ public final class ConsoleWorldScreen extends SelectWorldScreen {
       this.setFocused(null);
       this.view = new ConsoleLibraryView(this, false, actions, button -> this.addRenderableWidget(button),
          () -> { }, () -> this.minecraft.gui.setScreen(new ConsoleServerScreen(this.lastScreen)));
+      this.view.restoreSelection(this.rememberedSelection);
       if (this.searchBox != null) {
          this.searchBox.setPosition(Math.max(160, this.width - 170), 12);
          this.searchBox.setWidth(Math.min(108, this.width - 220));
