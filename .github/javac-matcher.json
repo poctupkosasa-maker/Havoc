@@ -1,0 +1,16 @@
+{
+  "problemMatcher": [
+    {
+      "owner": "havoc-javac",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^(.+\\.java):(\\d+): error: (.*)$",
+          "file": 1,
+          "line": 2,
+          "message": 3
+        }
+      ]
+    }
+  ]
+}

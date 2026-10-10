@@ -28,7 +28,7 @@ public final class ConsoleWorldScreen extends SelectWorldScreen {
    protected void init() {
       this.view = null;
       super.init();
-      this.worlds = ((ConsoleWorldScreenAccessor)this).havoc$list();
+      this.worlds = ((ConsoleWorldScreenAccessor)(Object)this).havoc$list();
       List<Button> actions = this.children().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
       this.clearWidgets();
       this.setFocused(null);
