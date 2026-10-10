@@ -16,6 +16,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -25,6 +26,14 @@ public final class ThemeManager {
    private static final int NAME_MAX_LENGTH = 50;
    private static final int BUILTIN_VERSION = 3;
    private static final String FILE_SUFFIX = ".theme.json";
+   private static final Map<String, Map<String, Integer>> COLOR_PRESETS = Map.of(
+      "Ocean", coloredPreset(0xFF38BDF8, 0xFF67E8F9, 0xFF081523, 0xFF102337),
+      "Forest", coloredPreset(0xFF4ADE80, 0xFFA3E635, 0xFF0B1812, 0xFF142A20),
+      "Sunset", coloredPreset(0xFFFB923C, 0xFFFB7185, 0xFF20121A, 0xFF35202C),
+      "Amethyst", coloredPreset(0xFFC084FC, 0xFFF0ABFC, 0xFF160F24, 0xFF261B3A),
+      "Rose", coloredPreset(0xFFF472B6, 0xFFFDA4AF, 0xFF200F19, 0xFF361C2B),
+      "Nord", coloredPreset(0xFF88C0D0, 0xFF81A1C1, 0xFF242933, 0xFF2E3440)
+   );
    private final Path themeDir = ConfigManager.getRootDir().resolve("themes");
 
    public ThemeManager() {
@@ -227,7 +236,8 @@ public final class ThemeManager {
    }
 
    public boolean isBuiltin(String name) {
-      return "Dark".equalsIgnoreCase(name) || "Light".equalsIgnoreCase(name) || "Rainbow".equalsIgnoreCase(name);
+      return "Dark".equalsIgnoreCase(name) || "Light".equalsIgnoreCase(name) || "Rainbow".equalsIgnoreCase(name)
+         || COLOR_PRESETS.keySet().stream().anyMatch(preset -> preset.equalsIgnoreCase(name));
    }
 
    private void ensureBuiltins() {
@@ -266,6 +276,32 @@ public final class ThemeManager {
          file.colors = ClientTheme.darkPreset();
          this.writeTheme("Rainbow", file);
       }
+
+      COLOR_PRESETS.forEach((name, colors) -> {
+         if (this.requiresBuiltinRefresh(this.themePath(name))) {
+            ThemeManager.ThemeFile file = new ThemeManager.ThemeFile();
+            file.version = BUILTIN_VERSION;
+            file.createdAtMs = System.currentTimeMillis();
+            file.colors = colors;
+            this.writeTheme(name, file);
+         }
+      });
+   }
+
+   private static Map<String, Integer> coloredPreset(int accent, int secondary, int background, int surface) {
+      Map<String, Integer> colors = new LinkedHashMap<>(ClientTheme.darkPreset());
+      colors.put(ClientTheme.ACCENT, accent);
+      colors.put(ClientTheme.ACCENT_SECOND, secondary);
+      colors.put(ClientTheme.MENU_BACKGROUND, background);
+      colors.put(ClientTheme.SIDEBAR_BACKGROUND, background);
+      colors.put(ClientTheme.SETTINGS_BACKGROUND, surface);
+      colors.put(ClientTheme.OUTLINE, (accent & 0x00FFFFFF) | 0x40000000);
+      colors.put(ClientTheme.SECONDARY_TEXT, 0xFFADB6C6);
+      colors.put(ClientTheme.SCROLLBAR, (secondary & 0x00FFFFFF) | 0xDC000000);
+      colors.put(ClientTheme.HUD_BACKGROUND, (background & 0x00FFFFFF) | 0xB0000000);
+      colors.put(ClientTheme.HUD_INSET, (surface & 0x00FFFFFF) | 0x80000000);
+      colors.put(ClientTheme.HUD_OUTLINE, (accent & 0x00FFFFFF) | 0x40000000);
+      return Map.copyOf(colors);
    }
 
    private boolean writeTheme(String name, ThemeManager.ThemeFile file) {
