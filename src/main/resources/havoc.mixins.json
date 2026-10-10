@@ -9,6 +9,8 @@
   "client": [
     "BetterMinecraftGameRendererMixin",
     "CameraMixin",
+    "ConsoleButtonMixin",
+    "ConsoleSliderMixin",
     "CapeTextureSwapMixin",
     "ChatComponentMixin",
     "ChatScreenMixin",
